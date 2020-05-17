@@ -1,0 +1,5 @@
+{% if form.rating.errors %}
+{% for error in form.rating.errors %}
+<span>{{ error }}</span>
+{% endfor %}
+{% endif %}

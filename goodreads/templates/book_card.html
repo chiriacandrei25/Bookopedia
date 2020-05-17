@@ -1,0 +1,44 @@
+<article class="media content-section">
+  <img class="article-img" style="width: auto; height: 250px;" src="{{ book.image_url }}">
+  <div class="media-body">
+    <a href="{{url_for('books.book', book_id=book.id)}}">
+      <h2 class="article-title book-title">{{ book.title }}</h2>
+    </a>
+    {% set authors_count = book.authors|length %}
+    <span>
+      <h5 class="authors-container"> by {% for i in range(0, authors_count - 1) %}
+        {% set author = book.authors[i].author %}
+        <a class="article-title" href="{{ url_for('authors.author', author_id=author.id) }}">{{ author.name }}</a>,
+        {% endfor %}
+        {% set author = book.authors[authors_count - 1].author %}
+        <a class="article-title" href="{{ url_for('authors.author', author_id=author.id) }}">{{ author.name }}</a>
+      </h5>
+    </span>
+    <div class="text ellipsis">
+      <span class="text-concat">
+        {{ book.description|safe }}
+      </span>
+    </div>
+    <div id="write_review_button">
+      {% if current_user.is_authenticated and my_review == None %}
+      <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('reviews.create_review', book_id=book.id) }}">Write
+        a review</a>
+      {% endif %}
+    </div>
+  </div>
+  {% if current_user.is_authenticated %}
+  <div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown"
+      aria-haspopup="true" aria-expanded="false">
+      Add it to you shelf
+    </button>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+      {% for shelf in current_user.shelves %}
+      <form action="{{ url_for('books.add_to_shelf', book_id=book.id, shelf_id=shelf.id) }}" method="POST">
+        <input class="btn btn-danger dropdown-item" type="submit" value="{{ shelf.name }}">
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</article>

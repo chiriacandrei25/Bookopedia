@@ -1,0 +1,61 @@
+<script type=text/javascript>
+    $(document).ready(function(){
+        window.book_id = 0;
+        window.shelf_id = {{ shelf.id|safe }};
+        function alert_template(elem, message, timeout) {
+           $(elem).show().html('<div class="alert alert-success" id=alert><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button><span>'+message+'</span></div>');
+            setTimeout(function() {
+                $('#alert').fadeOut('slow');
+            }, timeout);
+        }
+        $(function() {
+            $('.open-deleteBookModal').click( function() {
+                window.book_id = $(this).parent().find($( "meta" )).data().id;
+                $("#deleteBookModal").modal('toggle');
+            });
+        });
+        $(function() {
+          $('#remove_book').click( function() {
+            $.getJSON('/shelves/remove-book', {
+              shelf_id: window.shelf_id,
+              book_id: window.book_id,
+            }, function(data) {
+              $("#books").html(data.result);
+              $("#deleteBookModal").modal('hide');
+              $('.modal-backdrop').remove();
+              alert_template('#alert_div', 'Book removed from shelf.', 4000);
+            })
+            return false;
+          })
+        });
+    });
+</script>
+
+{% for bookInShelf in shelf.books %}
+{% set book = bookInShelf.book %}
+{% set template_path = 'book_card.html' %}
+{% include template_path %}
+{% if current_user == shelf.owner%}
+<div>
+    <meta id="my-data" data-id="{{ book.id }}">
+    <button type="button" class="open-deleteBookModal btn btn-danger btn-sm m-1" id="request_remove_book">Remove</button>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="deleteBookModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteBookModalLabel">Remove book from bookshelf?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id=remove_book>Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}

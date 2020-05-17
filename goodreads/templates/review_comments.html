@@ -1,0 +1,5 @@
+<meta id="my-data" data-length="{{ comments|length }}">
+{% for comment in comments %}
+{% include 'comment.html' %}
+{% endfor %}
+<a href=# type="button" class="more-comments">View more comments</a>

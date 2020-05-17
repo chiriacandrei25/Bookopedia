@@ -1,0 +1,11 @@
+<article class="media content-section">
+    <img class="rounded-circle article-img"
+        src="{{ url_for('static', filename='/pics/profile_pics/' + comment.user.image_file) }}">
+    <div class="media-body">
+        <div class="article-metadata">
+            <a class="mr-2" href="{{url_for('users.user_page', user_id=comment.user.id)}}">{{ comment.user.first_name }}
+                {{ comment.user.last_name }}</a>
+        </div>
+        <p> {{ comment.comment }} </p>
+    </div>
+</article>

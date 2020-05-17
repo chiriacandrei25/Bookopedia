@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>All books</title>
+{% endblock %}
+
+{% block body %}
+{% for book in books %}
+    {% set template_path = 'book_card.html' %}
+    {% include template_path %}
+{% endfor %}
+{% endblock %}

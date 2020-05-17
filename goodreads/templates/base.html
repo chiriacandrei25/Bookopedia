@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+$(document).ready(function(){
+    var unseen_notifs = {{current_user.unseen_notifications | safe}};
+    var socket = io.connect('http://127.0.0.1:5000');
+    socket.on('connect', function() {
+	});
+    socket.on('message', function(msg) {
+        $("#messages").append('<li>'+msg+'</li>');
+    });
+    
+    $('.notification_div').click(function() {
+        var review_id = $(this).find($( "meta" )).data().id;
+        window.location.replace("/review/" + review_id);
+    });
+
+    socket.on('add_notification', function(data) {
+        if ({{current_user.id | safe}} == data.receiver_id) {
+            var counter = $('#noti_Counter').text();
+            if(counter == 0) {
+                $('#noti_Counter').show();
+            }
+            counter++;
+            $('#noti_Counter').text(counter);
+            var curNotifs = $("#notifications_container").html();
+            $("#notifications_container").html(data.content + curNotifs);
+        }
+    });
+    
+    if(unseen_notifs > 0) {
+        $('#noti_Counter')
+            .css({ opacity: 0 })
+            .text(unseen_notifs)
+            .css({ top: '-10px' })
+            .animate({ top: '-2px', opacity: 1 }, 500);
+    }
+    else {
+        $('#noti_Counter').hide();
+    }
+
+    $('#noti_Button').click(function () {
+        $('#notifications').fadeToggle('fast', 'linear', function () {});
+        $('#noti_Counter').fadeOut('fast');
+        $('#noti_Counter').text(0);
+        $.getJSON('/reset_unseen_notifications', {
+        },
+        function(data) {
+        });
+        return false;
+    });
+
+    $(document).click(function () {
+        //$('#notifications').hide();
+    });
+});
+</script>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand navbar-light bg-light">
+            <a class="navbar-brand" href="{{ url_for('main.home') }}">Goodreads</a>
+
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="{{ url_for('main.home') }}">Home <span
+                                class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Link</a>
+                    </li>
+                </ul>
+
+                <!-- Navbar Right Side -->
+                <div class="navbar-nav">
+                    <form class="form-inline my-2 my-lg-0 autocomplete=" autocomplete="off" method="POST"
+                        action="{{url_for('search_engine.search')}}">
+                        {{ g.search_form.hidden_tag() }}
+                        {% if g.search_form.name.errors %}
+                        {{ g.search_form.name(class="form-control mr-sm-2 is-invalid", placeholder="Search") }}
+                        <div class="invalid-feedback">
+                            {% for error in g.search_form.name.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        {{ g.search_form.name(class="form-control mr-sm-2", placeholder="Search") }}
+                        {% endif %}
+                        {{ g.search_form.submit(class="btn btn-outline-info my-2 my-sm-0") }}
+                    </form>
+                    {% if current_user.is_authenticated %}
+                    <a class="nav-item nav-link" href="{{ url_for('books.recommend_books') }}"><img width="30px"
+                        height="30px" src="{{ url_for('static', filename='/pics/book_recommendation.png') }}"></a>
+                    <a class="nav-item nav-link" href="{{ url_for('requests.friend_requests') }}"><img width="30px"
+                            height="30px" src="{{ url_for('static', filename='/pics/friend_requests.png') }}"></a>
+                    <a class="nav-item nav-link" href="{{ url_for('messages.my_messages') }}"><img width="30px"
+                            height="30px" src="{{ url_for('static', filename='/pics/messages.jpg') }}"></a>
+
+                    <div id="noti_Container">
+                        <div id="noti_Counter"></div>   <!--SHOW NOTIFICATIONS COUNT.-->
+                        
+                        <!--A CIRCLE LIKE BUTTON TO DISPLAY NOTIFICATION DROPDOWN.-->
+                        <a class="nav-item nav-link" id="noti_Button" href=#><img width="30px" height="30px"
+                            src="{{ url_for('static', filename='/pics/notifications.png') }}"></a>
+        
+                        <!--THE NOTIFICAIONS DROPDOWN BOX.-->
+                        <div id="notifications">
+                            <h3>Notifications</h3>
+                            <div id="notifications_container">
+                                {% for notification in current_user.get_latest_notifications()[:3] %}
+                                {% set event = notification.get_event() %}
+                                {% set user = event.user %}
+                                {% if notification.event_type == 'like' %}
+                                    {% set content = ' liked your review: ' + event.review.review %}
+                                {% else %}
+                                    {% set content = ' commented on your review: ' + event.review.review %}
+                                {% endif %}
+                                {% include 'notification_card.html' %}
+                                {% endfor %}
+                            </div>
+                            <div class="seeAll"><a href="{{ url_for('notifications.my_notifications') }}">See All</a></div>
+                        </div>
+                    </div>
+
+                    <a class="nav-item nav-link" href="{{ url_for('users.user_page', user_id=current_user.id) }}"><img
+                        width="30px" height="30px" class="rounded-circle"
+                        src="{{ url_for('static', filename='/pics/profile_pics/' + current_user.image_file) }}"></a>
+                        
+                    <a class="nav-item nav-link" href="/logout">Logout</a>
+                    {% else %}
+                    <a class="nav-item nav-link" href="/login">Login</a>
+                    <a class="nav-item nav-link" href="/register">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <ul id="messages"></ul>
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <div class="middle-area">
+            {%block body %}{% endblock %}
+        </div>
+        <div class="left-area">
+            {%block left_body %}{% endblock %}
+        </div>
+        <div class="right-area">
+            {%block right_body %}{% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"
+        integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
+        crossorigin="anonymous"></script>
+
+
+
+</body>
+
+</html>

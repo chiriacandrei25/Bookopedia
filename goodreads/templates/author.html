@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Author page</title>
+{% endblock %}
+
+{% block body %}
+<article class="media content-section">
+    <img class="article-img" style="width: auto; height: 256px;" src="{{ author.image_url }}">
+    <div class="media-body">
+        <div class="article-metadata">
+            <h1 class="article-title book-title">{{ author.name }}</h1>
+        </div>
+        <span class="article-content">{{ author.about|safe }}</span>
+        <h2>Books</h2>
+        {% for author_book in author.books %}
+        {% set book = author_book.book %}
+        {% set template_path = 'book_card.html' %}
+        {% include template_path %}
+        {% endfor %}
+    </div>
+</article>
+{% endblock %}

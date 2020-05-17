@@ -1,0 +1,13 @@
+{% for like in review.likes %}
+<article class="media content-section">
+    <img class="rounded-circle article-img"
+        src="{{ url_for('static', filename='/pics/profile_pics/' + like.user.image_file) }}">
+    <div class="media-body">
+        <div class="article-metadata">
+            <a class="mr-2" href="{{url_for('users.user_page', user_id=like.user.id)}}">{{ like.user.first_name }}
+                {{ like.user.last_name }}</a>
+        </div>
+        <p> {{ like.user.friends|length}} friends </p>
+    </div>
+</article>
+{% endfor %}

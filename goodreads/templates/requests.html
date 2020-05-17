@@ -1,0 +1,95 @@
+<div id=requests>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+$(document).ready(function(){
+    window.request_id = 0;
+    window.div_to_remove;
+    $(function() {
+        $('.open-deleteModal').click( function() {
+            window.request_id = $(this).parent().find($( "meta" )).data().id;
+            window.div_to_remove = $(this).parent().parent().parent();
+            $("#deleteModal").modal('toggle');
+        });
+    });
+    $('#delete_request').click( function() {
+        $.getJSON('/request/delete', {
+            friend_request_id: window.request_id
+        },
+        function(data) {
+            window.div_to_remove.remove();
+            $("#deleteModal").modal('hide');
+            $('.modal-backdrop').remove();
+        });
+        return false;
+    });
+    $('#accept_request').click( function() {
+        friend_request_id = $(this).parent().find($( "meta" )).data().id;
+        div_to_remove = $(this).parent().parent().parent();
+        $.getJSON('/friendship/new', {
+            friend_request_id: friend_request_id
+        },
+        function(data) {
+            div_to_remove.remove();
+        });
+        return false;
+    });
+});
+</script>
+
+{% extends 'base.html' %}
+
+{% block body %}
+<h1 class="mb-3">Received requests</h1>
+{% for request in requests_received %}
+<article class="media content-section">
+    <img class="rounded-circle article-img"
+        src="{{ url_for('static', filename='/pics/profile_pics/' + request.sender.image_file) }}">
+    <div class="media-body">
+        <div class="article-metadata">
+            <a class="mr-2"
+                href="{{url_for('users.user_page', user_id=request.sender.id)}}">{{ request.sender.first_name }} {{ request.sender.last_name }}</a>
+        </div>
+        <div>
+            <meta id="my-data" data-id="{{ request.id }}">
+            <button type="button" class="btn btn-info btn-sm m-1" id="accept_request">Accept</button>
+            <button type="button" class="open-deleteModal btn btn-danger btn-sm m-1">Delete</button>
+        </div>
+    </div>
+</article>
+{% endfor %}
+<h1 class="mb-3">Sent requests</h1>
+{% for request in requests_sent %}
+<article class="media content-section">
+    <img class="rounded-circle article-img"
+        src="{{ url_for('static', filename='/pics/profile_pics/' + request.receiver.image_file) }}">
+    <div class="media-body">
+        <div class="article-metadata">
+            <a class="mr-2"
+                href="{{url_for('users.user_page', user_id=request.receiver.id)}}">{{ request.receiver.first_name }} {{ request.receiver.last_name}}</a>
+        </div>
+        <div>
+            <meta id="my-data" data-id="{{ request.id }}">
+            <button type="button" class="open-deleteModal btn btn-danger btn-sm m-1">Cancel</button>
+        </div>
+    </div>
+</article>
+{% endfor %}
+<!-- Modal -->
+<div class="modal fade" id="deleteModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete request?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id=delete_request>Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</div>

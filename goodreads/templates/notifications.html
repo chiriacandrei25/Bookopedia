@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<h1 class="mb-3">Notifications</h1>
+{% for notification in notifications %}
+{% set event = notification.get_event() %}
+{% set user = event.user %}
+{% if notification.event_type == 'like' %}
+{% set content = ' liked your review: ' + event.review.review %}
+{% else %}
+{% set content = ' commented on your review: ' + event.review.review %}
+{% endif %}
+{% include 'notification_card.html' %}
+{% endfor %}
+{% endblock %}

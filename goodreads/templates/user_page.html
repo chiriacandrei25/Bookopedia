@@ -1,0 +1,137 @@
+<div id="user_page">
+{% extends 'base.html' %}
+
+{% block head %}
+<title>{{user.first_name}} {{user.last_name}}</title>
+{% endblock %}
+
+{% block body %}
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+$(document).ready(function(){
+    window.relationship = "{{ relationship|safe }}";
+    window.friendship_id = "{{ friendship_id|safe }}";
+    if(window.relationship == 'none')
+        $("#friendship_status").text('Add friend');
+    else 
+      if(window.relationship == 'friends')
+          $("#friendship_status").text('Unfriend');
+      else
+        if(window.relationship == 'request_sent')
+            $("#friendship_status").text('Cancel request');
+        else
+            $("#friendship_status").text('Respond');
+    
+    function alert_template(elem, message, timeout) {
+        $(elem).show().html('<div class="alert alert-success" id=alert><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button><span>'+message+'</span></div>');
+        setTimeout(function() {
+            $('#alert').fadeOut('slow');
+        }, timeout);
+        return false;
+    }
+
+    $(function() {
+        $('#friendship_status').click( function() {
+            if(window.relationship == "none") {
+                $.getJSON('/request/new', {
+                  sender_id: {{ current_user.id|safe }},
+                  receiver_id: {{ user.id|safe }}
+                },
+                function(data) {
+                  $("#friendship_status").text('Cancel request');
+                  alert_template('#alert_div', 'Friend request sent.', 4000);
+                  window.relationship = 'request_sent';
+                  window.friendship_id = data.friend_request_id;
+                });
+            }
+            else
+                if(window.relationship == "request_sent") {
+                    $.getJSON('/request/delete', {
+                        friend_request_id: window.friendship_id
+                    },
+                    function(data) {
+                        $("#friendship_status").text('Add friend');
+                        alert_template('#alert_div', 'Friend request deleted.', 4000);
+                        window.relationship = 'none';
+                    });
+                }
+                else
+                    if(window.relationship == "request_received") {
+                        $.getJSON('/friendship/new', {
+                            friend_request_id: window.friendship_id
+                        },
+                        function(data) {
+                            $("#friendship_status").text('Unfriend');
+                            alert_template('#alert_div', 'Friend request accepted.', 4000);
+                            window.relationship = 'friends';
+                            window.friendship_id = data.friendship_id;
+                        });
+                    }
+                    else {
+                        $.getJSON('/friendship/delete', {
+                            friendship_id: window.friendship_id
+                        },
+                        function(data) {
+                            $("#friendship_status").text('Add friend');
+                            window.relationship = 'none';
+                            alert_template('#alert_div', 'You are not friends anymore.', 4000);
+                            //$("#user_page").html(data.user_page);
+                        });
+                    }
+            return false;
+        });
+    });
+    $(document).on('submit','form.create_shelf',function(){
+              $.getJSON('/shelves/new', {
+                  name: $('#shelf_name').val()
+              },
+              function(data) {
+                  $("#bookshelves").html(data.bookshelves);
+                  $("#bookshelves").css({"overflow-y":"auto"});
+                  $("#new_shelf").html(data.new_shelf);
+                  $("#dropdownNewShelf").click();
+                  alert_template('#alert_div', 'Shelf created.', 4000);
+                  $(window).resize();
+              });
+                return false;
+          });
+});
+</script>
+
+<div id="alert_div"></div>
+
+<article class="media content-section">
+  <img class="rounded-circle article-img"
+    src="{{ url_for('static', filename='/pics/profile_pics/' + user.image_file) }}">
+  <div class="media-body">
+    <div class="article-metadata">
+      <a class="mr-2">{{ user.first_name }} {{ user.last_name }}</a>
+      {% if current_user.is_authenticated and user != current_user %}
+      <button type="button" class="btn btn-secondary btn-sm m-1" id="friendship_status"></button>
+      <a href="{{ url_for('messages.create_message', receiver_id=user.id) }}"><button type="button" class="btn btn-secondary btn-sm m-1" id="send_message">Send Message</button></a>
+      {% endif %}
+    </div>
+  </div>
+</article>
+
+<h1 class="mb-3">Bookshelves by {{ user.first_name }}</h1>
+<div id=bookshelves>
+  {% set template_path = 'bookshelves.html' %}
+  {% include template_path %}
+</div>
+
+{% if user == current_user %}
+<div id=new_shelf>
+  {% set template_path = 'new_shelf.html' %}
+  {% include template_path %}
+</div>
+{% endif %}
+
+<h1 class="mb-3">{{ user.first_name }}'s updates</h1>
+<div id=news_feed>
+  {% set template_path = 'news_feed.html' %}
+  {% include template_path %}
+</div>
+
+{% endblock %}
+</div>

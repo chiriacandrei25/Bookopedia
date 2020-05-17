@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Question</title>
+{% endblock %}
+
+{% block body %}
+
+<head>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script type=text/javascript>
+  $(function() {
+    $('a#process_question').bind('click', function() {
+      $.getJSON('/background_process', {
+        proglang: $('input[name="proglang"]').val(),
+      }, function(data) {
+        $("#result").text(data.result);
+      });
+      return false;
+    });
+  });
+  </script>
+</head>
+
+<h3>Which is your favourite prog lang?</h3>
+<input type='text' name='proglang' id='proglang'>
+<a href='#' id=process_question><button class='btn btn-default'>Submit</button></a>
+<p id=result>...</p>
+{% endblock %}

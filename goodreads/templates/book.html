@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Book page</title>
+{% endblock %}
+
+{% block body %}
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+$(document).ready(function(){
+  var socket = io.connect('http://127.0.0.1:5000');
+  window.review_id = 0;
+  $(function() {
+      $('.open-deleteReviewModal').click( function() {
+          window.review_id = $(this).parent().find($( "meta" )).data().id;
+          $("#deleteReviewModal").modal('toggle');
+      });
+  });
+  $(function() {
+    $('#delete_review').click( function() {
+      $.getJSON('/review/delete', {
+        review_id: window.review_id,
+      }, 
+      function(data) {
+        $("#reviews").html(data.result);
+        $("#deleteReviewModal").modal('hide');
+        $('.modal-backdrop').remove();
+        $("#write_review_button").html("<a class='btn btn-secondary btn-sm mt-1 mb-1' href='{{ url_for('reviews.create_review', book_id=book.id) }}'>Write a review</a>");
+      })
+      return false;
+    })
+  });
+  $(function() {
+
+    $(document.body).on('click', '.likes-counter', function() {
+        var likes_container = $(this).parent().find(".reviewLikesModal");
+        likes_container.modal('toggle');
+        return false;
+    })
+
+    $(document.body).on('click', '.more-comments', function() {
+        var comments_container = $(this).parent();
+        $.getJSON('/review/comments', {
+            review_id: comments_container.parent().find($( "meta" )).data().id,
+            comments_count: comments_container.find($( "meta" )).data().length
+        },
+        function(data) {
+          comments_container.html(data.comments_container);
+        })
+        return false;
+    })
+
+    $(document.body).on('click', '.like-review', function() {
+        var like_button = $(this);
+        var likes_counter = like_button.parent().find(".likes-counter");
+        var likes_container = like_button.parent().find(".likes-container");
+        $.getJSON('/review/like', {
+            review_id: like_button.parent().find($( "meta" )).data().id
+        },
+        function(data) {
+            $.getJSON('/notifications/new', {
+                event_type: "like",
+                event_id: data.like_id
+            },
+            function(data) {
+                socket.emit('notification', {
+                    notification_id: data.notification_id
+                });
+            })
+            if(data.likes_count == 0) {
+                likes_count = "";
+            }
+            else if(data.likes_count == 1) {
+                likes_count = "1 like";
+            }
+            else {
+                likes_count = data.likes_count + " likes";
+            }
+            likes_counter.html(likes_count);
+            like_button.html('Unlike');
+            like_button.toggleClass('like-review unlike-review');
+            likes_container.html(data.likes_container);
+        })
+        return false;
+    })
+
+      $(document.body).on('click', '.unlike-review', function() {
+          var like_button = $(this);
+          var likes_counter = like_button.parent().find(".likes-counter");
+          var likes_container = like_button.parent().find(".likes-container");
+          $.getJSON('/review/unlike', {
+              review_id: like_button.parent().find($( "meta" )).data().id
+          },
+          function(data) {
+            if(data.likes_count == 0) {
+                likes_count = "";
+            }
+            else if(data.likes_count == 1) {
+                likes_count = "1 like";
+            }
+            else {
+                likes_count = data.likes_count + " likes";
+            }
+            likes_counter.html(likes_count);
+            like_button.html('Like');
+            like_button.toggleClass('unlike-review like-review');
+            likes_container.html(data.likes_container);
+          })
+          return false;
+      })
+
+      $(document.body).on('click', '.comment-review', function() {
+          var comment_button = $(this);
+          var comments_counter = comment_button.parent().parent().parent().find(".comments-counter");
+          var comments_container = comment_button.parent().parent().parent().find("#review_comments");
+          $.getJSON('/review/comment', {
+              review_id: comment_button.parent().parent().parent().find($( "meta" )).data().id,
+              comment: comment_button.parent().find(".comment-text").val()
+          },
+          function(data) {
+            if(data.comments_count == 0) {
+                comments_count = "";
+            }
+            else if(data.comments_count == 1) {
+                comments_count = "1 comment";
+            }
+            else {
+                comments_count = data.comments_count + " comments";
+            }
+            comments_counter.html(comments_count);
+            comments_container.append(data.comment_template);
+          })
+          return false;
+      })
+
+  });
+});
+</script>
+
+<div id="alert_div"></div>
+<article class="media content-section">
+  <img class="article-img" style="width: auto; height: 256px;" src="{{ book.image_url }}">
+  <div class="media-body">
+    <h1 class="article-title book-title">{{ book.title }}</h1>
+    {% set authors_count = book.authors|length %}
+    <h4 class="authors-container"> by {% for i in range(authors_count - 1) %}
+      {% set author = book.authors[i].author %}
+      <a class="article-title" href="{{ url_for('authors.author', author_id=author.id) }}">{{ author.name }}</a>,
+      {% endfor %}
+      {% set author = book.authors[authors_count - 1].author %}
+      <a class="article-title" href="{{ url_for('authors.author', author_id=author.id) }}">{{ author.name }}</a>
+    </h4>
+    <p>
+      {% set stars_count, last_star = g.avg_book_rating(book) %}
+      {% if stars_count != -1 %}
+      {% for i in range(stars_count) %}
+      <img width="25px" height="25px" src="{{ url_for('static', filename='/pics/star.jpg') }}">
+      {% endfor %}
+      {% if last_star != 0 %}
+      <img width="25px" height="25px" src="{{ url_for('static', filename='/pics/half_star.png') }}">
+      {% endif %}
+      {{ stars_count + last_star }}
+      ({{ book.reviews|length }} reviews)
+      {% endif %}
+    </p>
+    <span class="article-content" id="book_description">{{ book.description|safe }}</span>
+    <p class="article-content">ISBN: {{ book.isbn }}</p>
+    <p class="article-content">Publication Date: {{ book.publication_date.strftime('%d-%m-%Y') }}</p>
+    <p class="article-content">Publisher: {{ book.publisher }}</p>
+    <div id="write_review_button">
+      {% if current_user.is_authenticated and my_review == None %}
+      <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('reviews.create_review', book_id=book.id) }}">Write
+        a review</a>
+      {% endif %}
+    </div>
+
+  </div>
+  {% if current_user.is_authenticated %}
+  <div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown"
+      aria-haspopup="true" aria-expanded="false">
+      Add it to you shelf
+    </button>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+      {% for shelf in current_user.shelves %}
+      <form action="{{ url_for('books.add_to_shelf', book_id=book.id, shelf_id=shelf.id) }}" method="POST">
+        <input class="btn btn-danger dropdown-item" type="submit" value="{{ shelf.name }}">
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</article>
+<div id=reviews>
+  {% set template_path = 'book_reviews.html' %}
+  {% include template_path %}
+</div>
+{% endblock%}

@@ -1,0 +1,88 @@
+{% block body %}
+<article class="media content-section">
+  <img class="rounded-circle article-img"
+    src="{{ url_for('static', filename='/pics/profile_pics/' + review.user.image_file) }}">
+  <div class="media-body">
+    <meta id="my-data" data-id="{{ review.id }}">
+    <div class="article-metadata">
+      <p>
+        <a href="{{ url_for('users.user_page', user_id=review.user.id) }}">{{review.user.first_name}} </a> rated it
+        {% for i in range(review.rating) %}
+        <img class="star-review" width="25px" height="25px" src="{{ url_for('static', filename='/pics/star.jpg') }}">
+        {% endfor %}
+        <span class="rating-date"> {{ review.date_posted.strftime('%d-%m-%Y') }} </span>
+      </p>
+    </div>
+    <p class="article-content"> {{ review.review }} </p>
+
+    {% if current_user.is_authenticated %}
+    {% if g.user_liked_review(current_user, review) %}
+    <button type="button" class="btn btn-danger unlike-review">Unlike</button>
+    {% else %}
+    <button type="button" class="btn btn-danger like-review">Like</button>
+    {% endif %}
+    {% endif %}
+    {% set likes_count = g.format_number_of(review.likes, "like") %}
+    {% set comments_count = g.format_number_of(review.comments, "comment") %}
+    <a href=# type="button" class="likes-counter"> {{ likes_count }} </a>
+    <p class="comments-counter rating-date">{{ comments_count }}</p>
+    {% if current_user.is_authenticated %}
+    <article class="media content-section">
+      <img class="rounded-circle article-img"
+        src="{{ url_for('static', filename='/pics/profile_pics/' + current_user.image_file) }}">
+      <div class="media-body">
+        <textarea class="comment-text"></textarea>
+        <br>
+        <button type="button" class="btn btn-danger comment-review">Comment</button>
+      </div>
+    </article>
+    {% endif %}
+    <div id=comments_container>
+      {% set comments = review.comments[:2] %}
+      {% include 'review_comments.html' %}
+    </div>
+    <!-- Modal -->
+    <div class="modal fade reviewLikesModal" tabindex="-1" role="dialog" aria-labelledby="reviewLikesModalTitle"
+      aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="reviewLikesModalTitle">Review likes</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body likes-container">
+            {% include 'likes_container.html' %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</article>
+{% if current_user == review.user %}
+<div>
+  <meta id="my-data" data-id="{{ review.id }}">
+  <a class="btn btn-secondary btn-sm mt-1 mb-1"
+    href="{{ url_for('reviews.update_review', review_id=review.id) }}">Update</a>
+  <button type="button" class="open-deleteReviewModal btn btn-danger btn-sm m-1">Delete</button>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="deleteReviewModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteReviewModalLabel">Delete review?</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" id=delete_review>Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

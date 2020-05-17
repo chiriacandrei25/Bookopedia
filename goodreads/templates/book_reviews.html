@@ -1,0 +1,13 @@
+<h2> Your review </h2>
+{% for review in book.reviews %}
+{% if current_user == review.user %}
+{% include 'review.html' %}
+{% endif %}
+{% endfor %}
+
+<h2> Community reviews </h2>
+{% for review in book.reviews %}
+{% if current_user != review.user %}
+{% include 'review.html' %}
+{% endif %}
+{% endfor %}

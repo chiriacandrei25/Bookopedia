@@ -1,0 +1,60 @@
+<script type=text/javascript>
+    $(document).ready(function(){
+        window.shelf_id = 0;
+        $(function() {
+            $('.open-deleteModal').click( function() {
+                window.shelf_id = $(this).parent().find($( "meta" )).data().id;
+                $("#deleteModal").modal('toggle');
+            });
+        });
+        $(function() {
+          $('#delete_shelf').click( function() {
+            $.getJSON('/shelves/delete', {
+              shelf_id: window.shelf_id,
+            }, function(data) {
+              $("#bookshelves").html(data.bookshelves);
+              $("#bookshelves").parent().parent().css({"overflow-y":"scroll"});
+              $("#news_feed").html(data.news_feed);
+              $("#deleteModal").modal('hide');
+              $('.modal-backdrop').remove();
+            })
+            return false;
+          })
+        });
+    });
+</script>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+
+<body>
+    {% for shelf in user.shelves %}
+    <article class="media content-section">
+        <a class="article-title" href="{{ url_for('shelves.shelf', shelf_id=shelf.id) }}">{{ shelf.name }}</a>
+    </article>
+    {% if user == current_user %}
+    <div>
+        <meta id="my-data" data-id="{{ shelf.id }}">
+        <a class="btn btn-secondary btn-sm mt-1 mb-1"
+            href="{{ url_for('shelves.update_shelf', shelf_id=shelf.id) }}">Update</a>
+        <button type="button" class="open-deleteModal btn btn-danger btn-sm m-1"
+            id="request_delete_shelf">Delete</button>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="deleteModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Delete bookshelf?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id=delete_shelf>Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</body>

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Goodreads</title>
+{% endblock %}
+
+{% block body %}
+<div id=news_feed>
+    {% set template_path = 'news_feed.html' %}
+    {% include template_path %}
+</div>  
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Shelf page</title>
+{% endblock %}
+
+{% block body %}
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<div id="alert_div"></div>
+<article class="media content-section">
+    <div class="media-body">
+      <h2 class="article-title">{{ shelf.name }}</h2>
+    </div>
+</article>
+<div id=books>
+    {% set template_path = 'books_in_shelf.html' %}
+    {% include template_path %}
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% for update in updates %}
+{% if update.__class__.__name__ == 'Book' %}
+<article class="media content-section">
+    <img class="rounded-circle article-img"
+        src="{{ url_for('static', filename='/pics/profile_pics/' + update.author.image_file) }}">
+    <div class="media-body">
+        <div class="article-metadata">
+            <a class="mr-2" href="{{url_for('users.user_page', user_id=update.author.id)}}">{{ update.author.first_name }} </a>
+            added a new book
+        </div>
+        <h2><a class="article-title" href="{{url_for('books.book', book_id=update.id)}}">{{ update.title }}</a></h2>
+        <p>{{ update.description }}</p>
+    </div>
+</article>
+{% endif %}
+{% if update.__class__.__name__ == 'Review' %}
+<article class="media content-section">
+    <img class="rounded-circle article-img"
+        src="{{ url_for('static', filename='/pics/profile_pics/' + update.user.image_file) }}">
+    <div class="media-body">
+        <div class="article-metadata">
+            <a href="{{url_for('users.user_page', user_id=update.user.id)}}">{{ update.user.first_name }} </a> reveiwed 
+            <a href="{{url_for('books.book', book_id=update.book.id)}}">{{ update.book.title }}</a>
+            <span class="rating-date">{{ update.date_posted.strftime('%d-%m-%Y') }}</span>
+        </div>
+        <p>Rating:
+        {% for i in range(update.rating) %}
+            <img class="star-review" width="23px" height="23px" src="{{ url_for('static', filename='/pics/star.jpg') }}">
+        {% endfor %}
+        </p>
+        <p>{{ update.review }}</p>
+        {% set book = update.book %}
+        {% set template_path = 'book_card.html' %}
+        {% include template_path %}
+    </div>
+</article>
+{% endif %}
+{% if update.__class__.__name__ == 'BookInShelf' %}
+<article class="media content-section">
+    <img class="rounded-circle article-img"
+        src="{{ url_for('static', filename='/pics/profile_pics/' + update.shelf.owner.image_file) }}">
+    <div class="media-body">
+        <a href="{{url_for('users.user_page', user_id=update.shelf.owner.id)}}">{{ update.shelf.owner.first_name }} </a> marked
+        <a href="{{url_for('books.book', book_id=update.book.id)}}">{{ update.book.title }}</a> as
+        <a href="{{url_for('shelves.shelf', shelf_id=update.shelf.id)}}">{{ update.shelf.name }} </a>
+        <span class="rating-date">{{ update.date_posted.strftime('%d-%m-%Y') }}</span>
+        {% set book = update.book %}
+        {% set template_path = 'book_card.html' %}
+        {% include template_path %}
+    </div>
+</article>
+{% endif %}
+{% endfor %}

@@ -1,0 +1,29 @@
+<div class="dropdown">
+  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownNewShelf" data-toggle="dropdown"
+    aria-haspopup="true" aria-expanded="false"> New bookshelf
+  </button>
+  <div class="dropdown-menu dropdown_new_shelf" aria-labelledby="dropdownNewShelf">
+    <form class="create_shelf">
+      {{ form.hidden_tag() }}
+      <fieldset class="form-group">
+        <legend class="border-bottom mb-4">Shelf Name</legend>
+        <div class="form-group">
+          {{ form.shelf_name.label(class="form-control-label") }}
+          {% if form.shelf_name.errors %}
+          {{ form.shelf_name(class="form-control form-control-lg is-invalid") }}
+          <div class="invalid-feedback">
+            {% for error in form.shelf_name.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% else %}
+          {{ form.shelf_name(class="form-control form-control-lg") }}
+          {% endif %}
+        </div>
+      </fieldset>
+      <div class="form-group">
+        {{ form.submit(class="btn btn-outline-info") }}
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,70 @@
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+$(document).on('submit','form.update_review',function(){
+    $.getJSON('/review/edit', {
+        review_id: {{ review.id|safe }},
+        rating: $('input[name=rate]:checked', '.update_review').val(),
+        review: $('#review').val()
+    },
+    function(data) {
+        if(data.valid_review == "True") {
+            window.location.href = data.redirect;
+        }
+        else {
+            $("#rating_errors").html(data.rating_errors);
+        }
+    });
+    return false;
+});
+</script>
+
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Update review</title>
+{% endblock %}
+
+{% block body %}
+<div class="content-section">
+    <div class="media">
+        <img class="rounded-circle account-img" src="{{ review.book.small_image_url }}">
+        <div class="media-body">
+            <h2 class="account-heading">{{ review.book.title }}</h2>
+            {% set book = review.book %}
+            {% set authors_count = book.authors|length %}
+            <h4 class="authors-container"> by {% for i in range(authors_count - 1) %}
+                {% set author = book.authors[i].author %}
+                {{ author.name }},
+                {% endfor %}
+                {% set author = book.authors[authors_count - 1].author %}
+                <a class="article-title">{{ author.name }}</a>
+            </h4>
+        </div>
+    </div>
+    <form class='update_review'>
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Update review</legend>
+            <div class="form-group">
+                {% set template_path = 'star_rating.html' %}
+                {% include template_path %}
+                <div style="width: 100%;margin-top: .25rem;font-size: 90%;color: #dc3545;" id=rating_errors>
+                    {% set template_path = 'rating_errors.html' %}
+                    {% include template_path %}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form.review.label(class="form-control-label") }}
+                {% if form.review.errors %}
+                {{ form.review(class="form-control form-control-lg is-invalid") }}
+                {% else %}
+                {{ form.review(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-outline-info") }}
+        </div>
+    </form>
+</div>
+{% endblock %}
